@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Plus } from 'lucide-react';
 import Button from '../common/Button';
 import toast from 'react-hot-toast';
 
@@ -34,11 +34,14 @@ export default function RoomEntry() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.2 }}
+      className="w-full"
     >
       {/* Section Label */}
-      <div className="flex items-center gap-2 mb-4">
+      <div className="flex items-center gap-2 mb-3">
         <div className="w-2 h-2 rounded-full bg-accent" />
-        <span className="text-xs font-medium text-text-muted uppercase tracking-wider">Room Chat</span>
+        <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">
+          Room Chat
+        </span>
       </div>
 
       {/* Create Room Button */}
@@ -46,41 +49,42 @@ export default function RoomEntry() {
         fullWidth
         size="lg"
         onClick={handleCreateRoom}
-        className="mb-4"
+        icon={Plus}
+        className="mb-3 font-semibold"
       >
         Create Room
       </Button>
 
-      {/* Join Room Input */}
-      <div className="flex items-center gap-2">
-        <div className="flex-1 relative">
-          <input
-            type="text"
-            value={roomInput}
-            onChange={(e) => setRoomInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Room Code or Invite Link"
-            className="
-              w-full bg-bg-input border border-border rounded-xl
-              px-4 py-2.5 text-sm text-text-primary
-              placeholder:text-text-muted
-              focus:outline-none focus:border-accent
-              transition-colors duration-200
-            "
-            aria-label="Room code or invite link"
-          />
-        </div>
+      {/* Join Room Input with Embedded Submit Arrow */}
+      <div className="relative flex items-center w-full">
+        <input
+          type="text"
+          value={roomInput}
+          onChange={(e) => setRoomInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Room Code or Invite Link"
+          className="
+            w-full h-12 bg-bg-input border border-border rounded-xl
+            pl-4 pr-12 text-sm text-text-primary
+            placeholder:text-text-muted
+            focus:outline-none focus:border-accent
+            hover:border-text-muted/40
+            transition-all duration-200
+          "
+          aria-label="Room code or invite link"
+        />
         <button
+          type="button"
           onClick={handleJoinRoom}
           className="
-            w-10 h-10 rounded-xl bg-bg-input border border-border
+            absolute right-1.5 top-1.5 bottom-1.5 w-9 rounded-lg bg-bg-card hover:bg-bg-input border border-border
             flex items-center justify-center
-            text-text-muted hover:text-accent hover:border-accent
-            transition-all duration-200 cursor-pointer shrink-0
+            text-text-muted hover:text-accent hover:border-accent/40
+            transition-all duration-200 cursor-pointer
           "
           aria-label="Join room"
         >
-          <ArrowRight size={18} />
+          <ArrowRight size={17} />
         </button>
       </div>
     </motion.div>
