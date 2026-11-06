@@ -41,10 +41,10 @@
   - [x] About and Privacy links
   - [x] Responsive layout (centered desktop, stacked mobile)
 
-- [ ] **PHASE 4: Room Screens**
-  - [x] Create Room UI (/create-room) - initial version
-  - [x] Join Room UI (/join-room) - initial version
-  - [x] Room invitation success state with copy buttons
+- [x] **PHASE 4: Room Screens**
+  - [x] Create Room UI (/create-room) with expiration and participant options
+  - [x] Join Room UI (/join-room) with code/link parsing, password validation, and display name
+  - [x] Room invitation success state (RoomInvitation.jsx) with copy room code & copy invite link
 
 - [ ] **PHASE 5: Individual Chat Screens**
   - [x] Individual access page (/individual) - initial version
@@ -91,4 +91,5 @@
 
 | Commit | Scope | Description |
 |--------|-------|-------------|
-| Initial | Setup & Landing | feat: initialize React+Vite frontend, design system tokens, and implement landing page |
+| 4728639 | Setup & Landing | feat: initialize React+Vite frontend, design system tokens, and implement landing page |
+| Pending | Room Screens | feat: implement room creation, join room validation, and invitation workflow |

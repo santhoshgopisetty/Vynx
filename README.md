@@ -62,3 +62,4 @@ client/
 │   ├── hooks/            # Custom React hooks
 │   └── utils/            # Date formatting, message helpers, validation
 ```
+

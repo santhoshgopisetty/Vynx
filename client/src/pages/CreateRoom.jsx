@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { ArrowLeft, Clock, Users, Copy, Check, ExternalLink, Lock } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowLeft, Clock, Users, Shield, PlusCircle } from 'lucide-react';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
 import PasswordInput from '../components/common/PasswordInput';
 import Dropdown from '../components/common/Dropdown';
+import RoomInvitation from '../components/room/RoomInvitation';
+import useRoomStore from '../store/roomStore';
 import toast from 'react-hot-toast';
 
 const expirationOptions = [
@@ -27,10 +29,12 @@ const participantOptions = [
 
 export default function CreateRoom() {
   const navigate = useNavigate();
+  const createRoomInStore = useRoomStore((state) => state.createRoom);
+
   const [step, setStep] = useState('form'); // 'form' | 'success'
   const [loading, setLoading] = useState(false);
-  const [copiedCode, setCopiedCode] = useState(false);
-  const [copiedLink, setCopiedLink] = useState(false);
+  const [createdRoom, setCreatedRoom] = useState(null);
+
   const [form, setForm] = useState({
     name: '',
     password: '',
@@ -38,175 +42,141 @@ export default function CreateRoom() {
     maxParticipants: '10',
   });
   const [errors, setErrors] = useState({});
-  const [roomData, setRoomData] = useState(null);
 
   const updateForm = (field, value) => {
-    setForm(prev => ({ ...prev, [field]: value }));
-    if (errors[field]) setErrors(prev => ({ ...prev, [field]: '' }));
+    setForm((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: '' }));
   };
 
   const validate = () => {
     const newErrors = {};
     if (!form.name.trim()) newErrors.name = 'Room name is required';
+    if (form.name.trim().length > 50) newErrors.name = 'Room name cannot exceed 50 characters';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleCreate = () => {
+  const handleCreate = (e) => {
+    e?.preventDefault();
     if (!validate()) return;
+
     setLoading(true);
+
+    // Realistic UI simulation delay
     setTimeout(() => {
-      const code = `RM-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
-      setRoomData({
-        code,
-        name: form.name,
-        link: `${window.location.origin}/room/${code}`,
-        expiration: expirationOptions.find(o => o.value === form.expiration)?.label,
+      const selectedExp = expirationOptions.find((o) => o.value === form.expiration);
+      const room = createRoomInStore({
+        name: form.name.trim(),
+        password: form.password.trim() || null,
+        expiration: form.expiration,
+        expirationLabel: selectedExp?.label,
         maxParticipants: form.maxParticipants,
       });
+
+      setCreatedRoom(room);
       setStep('success');
       setLoading(false);
       toast.success('Room created successfully!');
-    }, 1200);
+    }, 800);
   };
-
-  const copyToClipboard = async (text, type) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      if (type === 'code') {
-        setCopiedCode(true);
-        setTimeout(() => setCopiedCode(false), 2000);
-      } else {
-        setCopiedLink(true);
-        setTimeout(() => setCopiedLink(false), 2000);
-      }
-      toast.success('Copied to clipboard!');
-    } catch {
-      toast.error('Failed to copy');
-    }
-  };
-
-  if (step === 'success' && roomData) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="w-full max-w-md"
-        >
-          <Card className="text-center">
-            <div className="w-14 h-14 rounded-2xl bg-success/10 flex items-center justify-center mx-auto mb-4">
-              <Check size={28} className="text-success" />
-            </div>
-            <h2 className="text-xl font-bold text-text-primary mb-2">Room Created!</h2>
-            <p className="text-sm text-text-secondary mb-6">{roomData.name}</p>
-
-            {/* Room Code */}
-            <div className="bg-bg-input rounded-xl p-4 mb-3">
-              <p className="text-xs text-text-muted mb-1">Room Code</p>
-              <div className="flex items-center justify-between">
-                <span className="text-lg font-mono font-bold text-accent">{roomData.code}</span>
-                <button
-                  onClick={() => copyToClipboard(roomData.code, 'code')}
-                  className="p-2 hover:bg-bg-card rounded-lg transition-colors cursor-pointer"
-                  aria-label="Copy room code"
-                >
-                  {copiedCode ? <Check size={16} className="text-success" /> : <Copy size={16} className="text-text-muted" />}
-                </button>
-              </div>
-            </div>
-
-            {/* Invite Link */}
-            <div className="bg-bg-input rounded-xl p-4 mb-6">
-              <p className="text-xs text-text-muted mb-1">Invitation Link</p>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-text-secondary truncate mr-2">{roomData.link}</span>
-                <button
-                  onClick={() => copyToClipboard(roomData.link, 'link')}
-                  className="p-2 hover:bg-bg-card rounded-lg transition-colors shrink-0 cursor-pointer"
-                  aria-label="Copy invitation link"
-                >
-                  {copiedLink ? <Check size={16} className="text-success" /> : <Copy size={16} className="text-text-muted" />}
-                </button>
-              </div>
-            </div>
-
-            {/* Room Details */}
-            <div className="flex items-center justify-center gap-4 text-xs text-text-muted mb-6">
-              <span className="flex items-center gap-1"><Clock size={12} /> {roomData.expiration}</span>
-              <span className="flex items-center gap-1"><Users size={12} /> Max {roomData.maxParticipants}</span>
-            </div>
-
-            <Button fullWidth size="lg" onClick={() => navigate(`/room/${roomData.code}`)}>
-              Enter Room
-            </Button>
-          </Card>
-        </motion.div>
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md"
-      >
-        <Link to="/" className="inline-flex items-center gap-2 text-sm text-text-muted hover:text-text-primary transition-colors mb-6">
+    <div className="min-h-screen bg-bg-main flex items-center justify-center p-4 sm:p-6">
+      <div className="w-full max-w-md">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-2 text-sm text-text-muted hover:text-text-primary transition-colors mb-6 font-medium"
+        >
           <ArrowLeft size={16} /> Back to Home
         </Link>
 
-        <Card>
-          <h1 className="text-2xl font-bold text-text-primary mb-1">Create a Room</h1>
-          <p className="text-sm text-text-secondary mb-6">Set up a temporary private chat room.</p>
+        <AnimatePresence mode="wait">
+          {step === 'form' ? (
+            <motion.div
+              key="create-form"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              transition={{ duration: 0.25 }}
+            >
+              <Card>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center">
+                    <PlusCircle size={20} className="text-accent" />
+                  </div>
+                  <div>
+                    <h1 className="text-xl font-bold text-text-primary">Create a Room</h1>
+                    <p className="text-xs text-text-secondary">Temporary, private, distraction-free</p>
+                  </div>
+                </div>
 
-          <div className="space-y-4">
-            <Input
-              label="Room Name"
-              placeholder="My Private Room"
-              value={form.name}
-              onChange={(e) => updateForm('name', e.target.value)}
-              error={errors.name}
-            />
+                <form onSubmit={handleCreate} className="space-y-4 mt-5">
+                  <Input
+                    label="Room Name"
+                    placeholder="e.g. Design Sync, Quick Catchup"
+                    value={form.name}
+                    onChange={(e) => updateForm('name', e.target.value)}
+                    error={errors.name}
+                    autoFocus
+                  />
 
-            <PasswordInput
-              label="Room Password (Optional)"
-              placeholder="Leave empty for no password"
-              value={form.password}
-              onChange={(e) => updateForm('password', e.target.value)}
-            />
+                  <PasswordInput
+                    label="Room Password (Optional)"
+                    placeholder="Leave empty for open room"
+                    value={form.password}
+                    onChange={(e) => updateForm('password', e.target.value)}
+                    helperText="Require participants to enter a password to join."
+                  />
 
-            <div className="relative">
-              <Dropdown
-                label="Room Expiration"
-                options={expirationOptions}
-                value={form.expiration}
-                onChange={(val) => updateForm('expiration', val)}
+                  <Dropdown
+                    label="Room Expiration"
+                    options={expirationOptions}
+                    value={form.expiration}
+                    onChange={(val) => updateForm('expiration', val)}
+                  />
+
+                  <Dropdown
+                    label="Maximum Participants"
+                    options={participantOptions}
+                    value={form.maxParticipants}
+                    onChange={(val) => updateForm('maxParticipants', val)}
+                  />
+
+                  <div className="flex items-center gap-3 pt-3">
+                    <Button
+                      variant="secondary"
+                      onClick={() => navigate('/')}
+                      className="flex-1"
+                      disabled={loading}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      loading={loading}
+                      className="flex-1"
+                    >
+                      Create Room
+                    </Button>
+                  </div>
+                </form>
+              </Card>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="create-success"
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              <RoomInvitation
+                room={createdRoom}
+                onEnter={() => navigate(`/room/${createdRoom.code}`)}
               />
-            </div>
-
-            <div className="relative">
-              <Dropdown
-                label="Maximum Participants"
-                options={participantOptions}
-                value={form.maxParticipants}
-                onChange={(val) => updateForm('maxParticipants', val)}
-              />
-            </div>
-          </div>
-
-          <div className="flex gap-3 mt-6">
-            <Button variant="secondary" onClick={() => navigate('/')} className="flex-1">
-              Cancel
-            </Button>
-            <Button onClick={handleCreate} loading={loading} className="flex-1">
-              Create Room
-            </Button>
-          </div>
-        </Card>
-      </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
-
